@@ -1,0 +1,285 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Notada — local notes</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="{% static 'notes/css/style.css' %}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+<div id="app" class="view-library">
+
+  <!-- Sidebar: folders -->
+  <aside id="sidebar">
+    <div class="brand">
+      <span class="logo">📝</span>
+      <div>
+        <h1>Notada</h1>
+        <p class="tagline">local notes · auto-saved to PDF</p>
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button id="new-folder-btn" class="btn ghost" title="New top-level folder">＋ Folder</button>
+      <button id="theme-btn" class="btn ghost icon" title="Toggle dark mode">🌙</button>
+    </div>
+
+    <div class="search-box">
+      <input id="search" type="search" placeholder="Search notes…" autocomplete="off">
+    </div>
+
+    <nav id="folder-tree" aria-label="Folders"></nav>
+    <div id="root-drop" title="Drop here to move to the top level">⤒ Move to top level</div>
+
+    <div class="sidebar-footer">
+      <span>PDF copies are written to <code>NotadaPDFs/</code> on this device.</span>
+    </div>
+  </aside>
+
+  <!-- Note list for the selected folder -->
+  <section id="note-list-pane">
+    <header class="pane-header">
+      <h2 id="current-folder-name">Notes</h2>
+      <div class="pane-header-actions">
+        <button id="new-note-btn" class="btn" title="New note">＋ New note</button>
+        <button id="import-note-btn" class="btn ghost" title="Import a PDF as its own new note">⇪ PDF as note</button>
+      </div>
+    </header>
+    <div class="list-controls">
+      <label class="mini-label" for="note-sort">Sort:</label>
+      <select id="note-sort" class="mini-select">
+        <option value="-updated">Recently edited</option>
+        <option value="-created">Recently created</option>
+        <option value="created">Oldest first</option>
+        <option value="title">Name A–Z</option>
+        <option value="-title">Name Z–A</option>
+      </select>
+    </div>
+    <div id="bulk-bar" hidden>
+      <span id="bulk-count">0 selected</span>
+      <div class="bulk-actions">
+        <button id="bulk-move" class="btn ghost small">Move to…</button>
+        <button id="bulk-delete" class="btn ghost small danger">Delete</button>
+        <button id="bulk-clear" class="btn ghost small">Clear</button>
+      </div>
+    </div>
+    <div id="note-list"></div>
+  </section>
+
+  <!-- Editor -->
+  <main id="editor-pane" class="empty">
+    <div id="editor-empty" class="editor-empty-state">
+      <div class="empty-illustration">🗒️</div>
+      <h2>Pick a note, or create one</h2>
+      <p>Type and draw on the same page. Pinch to zoom, one finger to draw.
+         Import a PDF to annotate it. Everything auto-saves to a PDF on your device.</p>
+    </div>
+
+    <div id="editor" hidden>
+      <!-- Top bar: title + note-level actions -->
+      <header id="editor-topbar">
+        <button id="back-btn" class="btn ghost" title="Back to library">‹ Library</button>
+        <input id="note-title" class="note-title" placeholder="Untitled note">
+        <div class="topbar-right">
+          <span id="save-status" class="save-status">Saved</span>
+          <button id="undo-btn" class="btn ghost icon" title="Undo (Ctrl/⌘+Z)" disabled>↶</button>
+          <button id="redo-btn" class="btn ghost icon" title="Redo (Ctrl/⌘+Y)" disabled>↷</button>
+          <div class="menu">
+            <button id="export-btn" class="btn ghost" title="Download a copy">⤓ Export</button>
+            <div class="menu-list" id="export-menu" hidden>
+              <button data-fmt="pdf">Download PDF</button>
+              <button data-fmt="json">Download editable JSON</button>
+            </div>
+          </div>
+          <button id="delete-btn" class="btn ghost danger icon" title="Delete note">🗑</button>
+        </div>
+      </header>
+
+      <!-- Tool bar -->
+      <div id="toolbar">
+        <div class="tool-group" id="tools">
+          <button class="tool active" data-tool="select" title="Select / move (V)">✥</button>
+          <button class="tool" data-tool="pen" title="Pen — draw (P)">✏️</button>
+          <button class="tool" data-tool="highlighter" title="Highlighter (H)">🖍️</button>
+          <button class="tool" data-tool="eraser" title="Eraser (E)">🧽</button>
+          <button class="tool" data-tool="text" title="Text (T)">🅃</button>
+          <button class="tool" data-tool="pan" title="Pan / move canvas (space)">✋</button>
+        </div>
+
+        <span class="tsep"></span>
+
+        <!-- colour modes: one is always selected; the picker edits the selected
+             mode, and that colour sticks across every note until you change it -->
+        <div class="tool-group palette-group" title="Colour modes">
+          <div class="palette" id="palette"></div>
+          <label class="swatch" title="Change the selected colour (applies everywhere until changed)"><input type="color" id="active-color" value="#1a1a1a"></label>
+        </div>
+
+        <span class="tsep"></span>
+
+        <!-- pen / highlighter options -->
+        <div class="tool-group pen-opts" id="pen-opts">
+          <span class="size-slider" title="Stroke width (down to 0.2)">
+            <input type="range" id="pen-size" min="0.2" max="40" step="0.2" value="4">
+            <span id="size-val">4</span>
+          </span>
+        </div>
+
+        <!-- text options -->
+        <div class="tool-group text-opts" id="text-opts" hidden>
+          <input type="number" id="text-size" class="num" min="8" max="200" value="22" title="Font size">
+          <select id="text-family" class="mini-select" title="Font">
+            <option value="system-ui">Sans</option>
+            <option value="Georgia, serif">Serif</option>
+            <option value="ui-monospace, monospace">Mono</option>
+            <option value="'Comic Sans MS', cursive">Casual</option>
+          </select>
+          <button class="btn ghost small tgl" id="text-bold" title="Bold"><b>B</b></button>
+          <button class="btn ghost small tgl" id="text-italic" title="Italic"><i>I</i></button>
+          <button class="btn ghost small tgl" id="text-underline" title="Underline"><u>U</u></button>
+          <button class="btn ghost small tgl" id="text-strike" title="Strikethrough"><s>S</s></button>
+          <span class="align-group" id="text-align">
+            <button class="btn ghost small tgl" data-align="left" title="Align left">⯇</button>
+            <button class="btn ghost small tgl" data-align="center" title="Align center">≡</button>
+            <button class="btn ghost small tgl" data-align="right" title="Align right">⯈</button>
+          </span>
+          <span class="hl-control" title="Text highlight">
+            <button class="btn ghost small tgl" id="text-hl-toggle">🖍 HL</button>
+            <label class="swatch small"><input type="color" id="text-hl" value="#ffe066"></label>
+          </span>
+        </div>
+
+        <!-- code options -->
+        <div class="tool-group code-opts" id="code-opts" hidden>
+          <span class="mini-label">Code:</span>
+          <select id="code-lang" class="mini-select" title="Language">
+            <option value="python">Python</option><option value="javascript">JavaScript</option>
+            <option value="cpp">C++</option><option value="c">C</option><option value="csharp">C#</option>
+            <option value="java">Java</option><option value="go">Go</option><option value="rust">Rust</option>
+            <option value="typescript">TypeScript</option><option value="ruby">Ruby</option><option value="php">PHP</option>
+            <option value="sql">SQL</option><option value="bash">Bash</option><option value="json">JSON</option>
+            <option value="html">HTML</option><option value="css">CSS</option><option value="plaintext">Plain</option>
+          </select>
+        </div>
+
+        <span class="tsep"></span>
+
+        <button class="btn ghost small" id="add-image-btn" title="Add image">🖼</button>
+        <button class="btn ghost small" id="add-code-btn" title="Insert code block">{ } Code</button>
+        <button class="btn ghost small" id="add-sticky-btn" title="Add a sticky note">🗒 Sticky</button>
+        <button class="btn ghost small" id="add-table-btn" title="Insert a table">▦ Table</button>
+        <button class="btn ghost small" id="add-chart-btn" title="Insert a chart">📊 Chart</button>
+        <button class="btn ghost small" id="add-math-btn" title="Insert a math expression">∑ Math</button>
+        <div class="menu">
+          <button class="btn ghost small" id="pages-btn" title="All-pages options">📚 Pages ▾</button>
+          <div class="menu-list" id="pages-menu" hidden>
+            <button data-all="resize">Resize all pages…</button>
+            <button data-all="rotate">Rotate all pages 90°</button>
+            <button data-all="bg">Background colour (all pages)…</button>
+            <button data-all="ruled-on">Add writing lines (all)</button>
+            <button data-all="ruled-off">Remove writing lines (all)</button>
+            <button data-all="default">Make new pages match this page</button>
+          </div>
+        </div>
+
+        <span class="tsep grow"></span>
+
+        <!-- selection actions -->
+        <div class="tool-group sel-actions" id="sel-actions" hidden>
+          <span id="sel-count" class="sel-count"></span>
+          <button class="btn ghost small" id="sel-edit" title="Edit table / chart" hidden>✎ Edit</button>
+          <label class="swatch small" title="Colour of selection"><input type="color" id="sel-color" value="#1a1a1a"></label>
+          <button class="btn ghost small" id="sel-rotate" title="Rotate 90°">⟳ 90°</button>
+          <button class="btn ghost small" id="sel-front" title="Bring to front">Front</button>
+          <button class="btn ghost small" id="sel-back" title="Send to back">Back</button>
+          <button class="btn ghost small danger" id="sel-delete" title="Delete (Del)">Delete</button>
+        </div>
+
+        <span class="tsep"></span>
+
+        <div class="tool-group zoom-group">
+          <button class="btn ghost small" id="zoom-out" title="Zoom out">－</button>
+          <button class="btn ghost small" id="zoom-level" title="Fit width">100%</button>
+          <button class="btn ghost small" id="zoom-in" title="Zoom in">＋</button>
+        </div>
+      </div>
+
+      <!-- per-page menu (opened from a page's ⋯ button) -->
+      <div class="menu-list floating" id="page-menu" hidden>
+        <button data-page="add-after">Add blank page after</button>
+        <button data-page="add-before">Add blank page before</button>
+        <button data-page="import">Insert PDF after this page…</button>
+        <button data-page="resize">Resize this page…</button>
+        <button data-page="rotate">Rotate this page 90°</button>
+        <button data-page="bg">Background colour…</button>
+        <button data-page="ruled">Toggle writing lines</button>
+        <button data-page="delete" class="danger-item">Delete this page</button>
+      </div>
+
+      <!-- The canvas surface -->
+      <div id="canvas-wrap">
+        <canvas id="board"></canvas>
+        <!-- text editing overlay is injected here at runtime -->
+      </div>
+
+      <footer id="editor-status">
+        <span id="page-info"></span>
+        <span id="hint">Select tool: drag empty space to lasso-select · Shift-click to add · two fingers / ⌘Ctrl+scroll to zoom · Ctrl/⌘+S to save</span>
+      </footer>
+    </div>
+  </main>
+
+  <input type="file" id="image-input" accept="image/*" hidden>
+  <input type="file" id="pdf-input" accept="application/pdf,.pdf" hidden>
+</div>
+
+<!-- right-click context menu (notes) -->
+<div id="ctx-menu" class="ctx-menu" hidden></div>
+
+<!-- math editor: LaTeX + live render side by side -->
+<div id="math-modal" hidden>
+  <div class="math-card">
+    <h3>Math expression</h3>
+    <div class="math-symbols" id="math-symbols"></div>
+    <div class="math-preview" id="math-preview"><span class="math-hint">Preview appears here</span></div>
+    <textarea id="math-input" class="math-input" placeholder="Type LaTeX, e.g.  \int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}"></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" id="math-cancel">Cancel</button>
+      <button class="btn" id="math-ok">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- generic modal dialog -->
+<div id="modal" hidden>
+  <div class="modal-card">
+    <h3 id="modal-title">Dialog</h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="modal-cancel">Cancel</button>
+      <button class="btn" id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+<div id="busy" hidden><div class="spinner"></div><span id="busy-text">Working…</span></div>
+
+<script>window.MathJax = { startup: { typeset: false } };</script>
+<script src="{% static 'notes/vendor/tex-svg.js' %}"></script>
+<script src="{% static 'notes/vendor/pdf.min.js' %}"></script>
+<script src="{% static 'notes/vendor/jspdf.umd.min.js' %}"></script>
+<script src="{% static 'notes/vendor/highlight.min.js' %}"></script>
+<script>
+  // point pdf.js at the vendored worker (no CDN, fully offline)
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "{% static 'notes/vendor/pdf.worker.min.js' %}";
+  }
+</script>
+<script src="{% static 'notes/js/editor.js' %}"></script>
+<script src="{% static 'notes/js/app.js' %}"></script>
+</body>
+</html>

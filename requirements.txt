@@ -1,0 +1,4 @@
+# Notada has a single Python dependency — Django.
+# (pdf.js, jsPDF, highlight.js and MathJax are vendored under
+#  notes/static/notes/vendor/, so there are no other pip packages.)
+Django>=5.0,<7.0

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python --version)",
+      "PowerShell(python -c \"import django; print\\('django', django.get_version\\(\\)\\)\" 2>$null)",
+      "PowerShell(python -m pip --version)",
+      "PowerShell(pip install \"Django>=5.0\" 2>&1)",
+      "PowerShell($env:DJANGO_SETTINGS_MODULE=\"notada.settings\"; python manage.py makemigrations notes; if \\($?\\) { python manage.py migrate }; if \\($?\\) { python manage.py check })",
+      "PowerShell($env:DJANGO_SETTINGS_MODULE=\"notada.settings\"; Start-Process python -ArgumentList \"manage.py\",\"runserver\",\"127.0.0.1:8000\",\"--noreload\" -WindowStyle Hidden; Start-Sleep -Seconds 4; Write-Output \"server started\")"
+    ]
+  }
+}
