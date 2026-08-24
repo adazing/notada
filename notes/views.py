@@ -91,6 +91,32 @@ def folder_detail(request, pk):
     return JsonResponse(folder.to_dict())
 
 
+@require_http_methods(["POST"])
+def folders_reorder(request):
+    """Set the sibling order (and optionally reparent) for a list of folders.
+
+    Body: {"parent_id": <id or null>, "ordered_ids": [id, id, ...]}
+    Assigns order = index for each; moves any into `parent_id` (with a cycle
+    guard). Used by drag-to-reorder in the sidebar.
+    """
+    data = _body(request)
+    parent_id = data.get("parent_id")
+    ids = data.get("ordered_ids") or []
+    for i, fid in enumerate(ids):
+        folder = Folder.objects.filter(id=fid).first()
+        if not folder:
+            continue
+        folder.order = i
+        if parent_id and _is_descendant(parent_id, folder.id):
+            # reparenting here would create a cycle — keep the old parent but still
+            # apply the new order.
+            folder.save(update_fields=["order"])
+            continue
+        folder.parent_id = parent_id
+        folder.save(update_fields=["parent", "order"])
+    return JsonResponse({"ok": True})
+
+
 def _is_descendant(candidate_id, folder_id):
     current = Folder.objects.filter(id=candidate_id).first()
     while current is not None:
@@ -217,6 +243,86 @@ def note_pdf(request, pk):
     note.pdf_path = str(target)
     note.save(update_fields=["pdf_path"])
     return JsonResponse({"ok": True, "path": str(target)})
+
+
+# ---------------------------------------------------------------------------
+# Media (audio / video) stored as real files, served with HTTP range support
+# ---------------------------------------------------------------------------
+
+import re
+import uuid
+
+_MEDIA_EXT = {
+    "video/webm": ".webm", "video/mp4": ".mp4", "video/ogg": ".ogv",
+    "video/quicktime": ".mov", "video/x-matroska": ".mkv",
+    "audio/webm": ".weba", "audio/mpeg": ".mp3", "audio/mp3": ".mp3",
+    "audio/mp4": ".m4a", "audio/ogg": ".ogg", "audio/wav": ".wav",
+    "audio/x-wav": ".wav", "audio/aac": ".aac",
+}
+_SAFE_NAME = re.compile(r"^[0-9a-f]{32}\.[a-z0-9]{1,5}$")
+
+
+def _media_root():
+    root = Path(settings.NOTES_MEDIA_ROOT)
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+@csrf_protect
+@require_http_methods(["POST"])
+def media_upload(request):
+    """Save a recorded/imported clip. Body is the raw bytes; ?type=<mime> names it."""
+    data = request.body
+    if not data:
+        return JsonResponse({"error": "empty body"}, status=400)
+    mime = (request.GET.get("type") or "application/octet-stream").split(";")[0].strip().lower()
+    ext = _MEDIA_EXT.get(mime, ".bin")
+    name = uuid.uuid4().hex + ext
+    (_media_root() / name).write_bytes(data)
+    return JsonResponse({"url": f"/api/media/{name}", "type": mime})
+
+
+@require_http_methods(["GET"])
+def media_serve(request, name):
+    """Stream a stored clip, honouring the Range header so video can seek."""
+    if not _SAFE_NAME.match(name):
+        raise Http404("bad name")
+    path = _media_root() / name
+    if not path.exists():
+        raise Http404("no such clip")
+    ext = path.suffix.lower()
+    ctype = next((m for m, e in _MEDIA_EXT.items() if e == ext), "application/octet-stream")
+    size = path.stat().st_size
+    range_header = request.headers.get("Range", "")
+    m = re.match(r"bytes=(\d*)-(\d*)", range_header)
+    if m and (m.group(1) or m.group(2)):
+        start = int(m.group(1)) if m.group(1) else 0
+        end = int(m.group(2)) if m.group(2) else size - 1
+        start = max(0, start)
+        end = min(end, size - 1)
+        length = end - start + 1
+        f = open(path, "rb")
+        f.seek(start)
+        resp = FileResponse(f, status=206, content_type=ctype)
+        resp["Content-Length"] = str(length)
+        resp["Content-Range"] = f"bytes {start}-{end}/{size}"
+        # FileResponse streams to EOF; cap it to the requested slice.
+        resp.streaming_content = _ranged(f, length)
+    else:
+        resp = FileResponse(open(path, "rb"), content_type=ctype)
+        resp["Content-Length"] = str(size)
+    resp["Accept-Ranges"] = "bytes"
+    return resp
+
+
+def _ranged(f, length, chunk=8192):
+    remaining = length
+    while remaining > 0:
+        block = f.read(min(chunk, remaining))
+        if not block:
+            break
+        remaining -= len(block)
+        yield block
 
 
 def export_json(request, pk):

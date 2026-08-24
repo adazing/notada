@@ -75,4 +75,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100 MB
 # device" location — back it up by copying this folder.
 NOTES_PDF_ROOT = BASE_DIR / "NotadaPDFs"
 
+# Where recorded/imported audio & video clips are stored as real files (served
+# back over HTTP so <video>/<audio> can play and seek them reliably — data: URLs
+# are not dependable for video). Like the PDFs, these live on your device.
+NOTES_MEDIA_ROOT = BASE_DIR / "NotadaMedia"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

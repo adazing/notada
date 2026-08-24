@@ -1,4 +1,14 @@
-# Notada has a single Python dependency — Django.
-# (pdf.js, jsPDF, highlight.js and MathJax are vendored under
-#  notes/static/notes/vendor/, so there are no other pip packages.)
-Django>=5.0,<7.0
+# Notada — Python dependencies.
+#
+# The only real dependency is Django; asgiref, sqlparse and tzdata are Django's
+# own dependencies (pinned here for reproducible installs). Everything on the
+# front end (pdf.js, jsPDF, highlight.js, MathJax) is vendored under
+# notes/static/notes/vendor/, so there are no other pip packages and no network
+# access is needed at runtime.
+#
+# Install into a virtual environment — see README.md.
+
+Django==6.0.7
+asgiref==3.12.1
+sqlparse==0.5.5
+tzdata==2025.3

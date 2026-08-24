@@ -33,6 +33,12 @@ each note is **automatically saved as a PDF on your device**.
   (top handle or “⟳ 90°”), reorder (Front/Back), and draw on top of them.
 - **Organise by drag-and-drop** — drag a note card onto any folder/subfolder to move
   it, or right-click a note for a “Move to…” menu (plus pin / delete).
+- **Tidy toolbar** — everything you can add lives in one **➕ Insert** menu (image, code,
+  sticky, table, chart, math, shapes, audio/video). Select any object and an
+  **object bar** appears with **W / H / ↻ (rotation)** — which work for *anything*
+  (text, images, strokes, shapes, or a multi-select group) and **update live** as you
+  drag the handles. **Right-click an object** to re-order it (bring to front / forward /
+  backward / to back) or rotate/edit/delete it; z-order also lives in an **Arrange** menu.
 - **Folders & subfolders**, each with its own colour; full-text title search; pin
   notes; light / dark theme.
 - **Export** a note as a PDF or as editable JSON.
@@ -50,8 +56,13 @@ each note is **automatically saved as a PDF on your device**.
   Click **＋** to add the current colour, right-click a swatch to remove it.
 - **Richer text** — set an exact font size, font, **bold**/*italic*, and colour; text is
   multi-line and wraps to the box width (drag the corner to change the width).
-- **Code blocks** — “{ } Code” inserts an auto-syntax-highlighted block; pick the
-  language (Python, JavaScript, C++, C#, Java, Go, Rust, TypeScript, and more).
+- **Code blocks** — “{ } Code” (in the **➕ Insert** menu) inserts a syntax-highlighted
+  block. Set the language two ways: the **‹/› Language** dropdown in the toolbar when the
+  block is selected, or **right-click the block → “Highlight as”** (the current language is
+  dotted). Twenty-plus common languages are supported — Python, JavaScript, TypeScript,
+  HTML, CSS, JSON, Java, Kotlin, C/C++/C#, Go, Rust, Swift, Ruby, PHP, SQL, Bash, YAML,
+  Markdown, and plain text — each highlighted with a light theme that also reads well in the
+  exported PDF.
 - **Per-page controls** — every page has a **⋯** button (top-right) to add a page
   before/after, insert a PDF after it, resize, rotate, change its background colour,
   toggle writing lines, or delete it.
@@ -76,7 +87,12 @@ each note is **automatically saved as a PDF on your device**.
 - Double-click any text, code, or sticky box to edit it; empty text boxes stay put so you
   can size them before typing.
 - **Tables** — “▦ Table” inserts a table; double-click (or ✎ Edit) to change rows, columns,
-  cell data, header shading, zebra striping, grid/text colour, and alignment.
+  cell data, and (in a tidied-up dialog with plain-language labels) whether to **shade the
+  header row** and **shade every other row** (“zebra” stripes), plus grid-line colour, text
+  colour, and alignment.
+- **Rounded corners** — select a shape (rectangle, triangle, or diamond), image, video, or
+  audio card and use the **⌜⌝ corner** field in the object bar to round its corners; the
+  rounding follows the shape, so even a triangle or diamond gets softened points.
 - **Charts** — “📊 Chart” inserts a bar / line / pie chart; edit the data points (label,
   value, colour), title, and bar width in a dialog.
 - **Text alignment** — left / centre / right within a text box.
@@ -93,20 +109,98 @@ each note is **automatically saved as a PDF on your device**.
 - **Rich text** now also has **underline**, **strikethrough**, and left/centre/right alignment,
   and a clearer highlight toggle.
 - New notes open **fitted to the window** (no more tiny page in the corner).
+- **Rich text** — inside a text box you can mix **fonts, sizes, colours and styles**,
+  add **bullet & numbered lists**, and insert **clickable links** (which stay clickable
+  in the exported PDF). Formatting shows live as you type; `Ctrl/⌘-click` a link to open it.
+  - **Links** — the 🔗 button opens a dialog with **Text** and **Link** fields you edit
+    together: type a URL with the text empty and it fills the text for you; select text
+    first and it becomes the link's text; existing links can be **edited or removed**.
+    Typing a URL and pressing space/Enter still auto-links it — and the very next
+    **Backspace undoes that auto-link** (press it again for a normal backspace).
+  - **List markers** — bullets and numbers automatically **match the size, colour and
+    style** of the text on their line; the **•⚙** button lets you nudge their size or
+    colour if you want them a little different.
+- **Audio & video** — the **➕ Insert** menu imports an audio/video file or **records** one
+  with your mic/camera; it shows as a card you double-click to play. Clips are saved as
+  real files under `NotadaMedia/` and streamed back (with seeking), so recorded video
+  plays reliably rather than being embedded inline.
+- **Shapes** — the **◇ Shape** menu drops a rectangle, circle/ellipse, triangle, diamond, or
+  line; select it to change **fill, outline colour, outline width, width/height, and rotation**
+  (drag the corners to resize proportionally, the sides to stretch one axis, the top handle to
+  rotate). Or just **draw one freehand and hold the pen still** at the end — if your stroke is
+  close to a basic shape it **snaps** to a clean one; a scribble stays as ink. Works with the
+  **highlighter** too: a closed shape becomes a translucent highlight, a line a thick see-through mark.
+- **Copy / paste objects** — select strokes, text, images (or a mix), `Ctrl/⌘+C` /
+  `Ctrl/⌘+V` to duplicate them (paste selects the copy so you can move it), and drag a
+  multi-selection's corner to **scale the whole group** proportionally. Screenshot paste
+  and pasting into a text box still work as before.
+- **Copy sizes & colours are per-tool** — pen and highlighter keep separate palettes and
+  stroke-size lists; add/remove entries as you like.
 
-## Running it
+## Install & run
+
+You need **Python 3.11+** (developed on 3.14). Everything runs locally; no
+internet is required after install.
+
+### 1. Get the code and open a terminal in the project folder
+
+The folder containing `manage.py`.
+
+### 2. Create and activate a virtual environment
+
+A virtual environment keeps Notada's dependencies separate from the rest of your
+system. Create it once:
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+> If PowerShell blocks the activate script, run once:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again.
+
+**Windows (cmd.exe):**
+```bat
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+You'll see `(.venv)` at the start of your prompt when it's active.
+
+### 3. Install dependencies
 
 ```bash
-pip install -r requirements.txt      # Django only
-python manage.py migrate             # first run: create the local database
+pip install -r requirements.txt
+```
+
+### 4. Create the local database (first run only)
+
+```bash
+python manage.py migrate
+```
+
+### 5. Start the app
+
+```bash
 python manage.py runserver
 ```
 
-Open **http://127.0.0.1:8000/**.
+Open **http://127.0.0.1:8000/** in your browser.
 
-> The app ships with pdf.js and jsPDF vendored locally in
-> `notes/static/notes/vendor/`, so PDF import/export works fully offline — nothing
-> is fetched from the internet at runtime.
+Next time, you only need steps 2 (activate the venv) and 5 (`runserver`). To stop
+the server, press `Ctrl+C`. To leave the virtual environment, run `deactivate`.
+
+> pdf.js, jsPDF, highlight.js and MathJax are vendored under
+> `notes/static/notes/vendor/`, so PDF import/export, code highlighting and math
+> all work fully offline — nothing is fetched from the internet at runtime.
+> Recording audio/video and following links do use your browser's camera/mic and
+> network respectively.
 
 ## Tools (toolbar)
 
@@ -123,12 +217,15 @@ Open **http://127.0.0.1:8000/**.
 
 ## Where is my data?
 
-Two places, both local to this device:
+Three places, all local to this device:
 
 1. **`db.sqlite3`** — the editable source of truth (pages, strokes, text, images).
    Back up your notes by copying this file.
 2. **`NotadaPDFs/`** — the auto-generated, flattened PDF copies, laid out in
    folders matching your app folders. These are regenerated on every save.
+3. **`NotadaMedia/`** — recorded/imported audio & video clips, stored as real files
+   and streamed back to the player. The note references each clip by URL, so keep this
+   folder alongside `db.sqlite3` when backing up.
 
 There are intentionally **no user accounts** — this is a personal, local app, so
 `DEBUG = True` and a fixed `SECRET_KEY` are fine.

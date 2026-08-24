@@ -122,25 +122,39 @@
 
         <!-- pen / highlighter options -->
         <div class="tool-group pen-opts" id="pen-opts">
-          <span class="size-slider" title="Stroke width (down to 0.2)">
-            <input type="range" id="pen-size" min="0.2" max="40" step="0.2" value="4">
-            <span id="size-val">4</span>
-          </span>
+          <select id="pen-size-select" class="mini-select" title="Stroke size"></select>
+          <button class="btn ghost small" id="pen-size-add" title="Add a stroke size">＋</button>
+          <button class="btn ghost small" id="pen-size-del" title="Remove the selected size">−</button>
         </div>
 
         <!-- text options -->
         <div class="tool-group text-opts" id="text-opts" hidden>
           <input type="number" id="text-size" class="num" min="8" max="200" value="22" title="Font size">
           <select id="text-family" class="mini-select" title="Font">
-            <option value="system-ui">Sans</option>
-            <option value="Georgia, serif">Serif</option>
-            <option value="ui-monospace, monospace">Mono</option>
-            <option value="'Comic Sans MS', cursive">Casual</option>
+            <option value="system-ui">Sans (system)</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+            <option value="Tahoma, sans-serif">Tahoma</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Palatino Linotype', Palatino, serif">Palatino</option>
+            <option value="Garamond, serif">Garamond</option>
+            <option value="'Courier New', monospace">Courier</option>
+            <option value="ui-monospace, 'Cascadia Code', Consolas, monospace">Mono</option>
+            <option value="Impact, sans-serif">Impact</option>
+            <option value="'Brush Script MT', cursive">Script</option>
+            <option value="'Comic Sans MS', cursive">Comic Sans</option>
           </select>
           <button class="btn ghost small tgl" id="text-bold" title="Bold"><b>B</b></button>
           <button class="btn ghost small tgl" id="text-italic" title="Italic"><i>I</i></button>
           <button class="btn ghost small tgl" id="text-underline" title="Underline"><u>U</u></button>
           <button class="btn ghost small tgl" id="text-strike" title="Strikethrough"><s>S</s></button>
+          <button class="btn ghost small" id="text-bullet" title="Bulleted list (while editing)">•≡</button>
+          <button class="btn ghost small" id="text-number" title="Numbered list (while editing)">1.≡</button>
+          <button class="btn ghost small" id="text-link" title="Add / edit a link — or select text first, then click this">🔗</button>
+          <button class="btn ghost small" id="text-marker" title="List markers: match the text, or tweak their size/colour">•⚙</button>
           <span class="align-group" id="text-align">
             <button class="btn ghost small tgl" data-align="left" title="Align left">⯇</button>
             <button class="btn ghost small tgl" data-align="center" title="Align center">≡</button>
@@ -150,29 +164,56 @@
             <button class="btn ghost small tgl" id="text-hl-toggle">🖍 HL</button>
             <label class="swatch small"><input type="color" id="text-hl" value="#ffe066"></label>
           </span>
+          <select id="text-linespacing" class="mini-select" title="Line spacing">
+            <option value="1.3">1.0</option>
+            <option value="1.6">1.15</option>
+            <option value="1.95">1.5</option>
+            <option value="2.6">2.0</option>
+          </select>
         </div>
 
         <!-- code options -->
         <div class="tool-group code-opts" id="code-opts" hidden>
-          <span class="mini-label">Code:</span>
-          <select id="code-lang" class="mini-select" title="Language">
+          <span class="mini-label">‹/› Language</span>
+          <select id="code-lang" class="mini-select" title="Syntax-highlight this code block as…">
             <option value="python">Python</option><option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="html">HTML</option><option value="css">CSS</option><option value="json">JSON</option>
+            <option value="java">Java</option><option value="kotlin">Kotlin</option>
             <option value="cpp">C++</option><option value="c">C</option><option value="csharp">C#</option>
-            <option value="java">Java</option><option value="go">Go</option><option value="rust">Rust</option>
-            <option value="typescript">TypeScript</option><option value="ruby">Ruby</option><option value="php">PHP</option>
-            <option value="sql">SQL</option><option value="bash">Bash</option><option value="json">JSON</option>
-            <option value="html">HTML</option><option value="css">CSS</option><option value="plaintext">Plain</option>
+            <option value="go">Go</option><option value="rust">Rust</option><option value="swift">Swift</option>
+            <option value="ruby">Ruby</option><option value="php">PHP</option>
+            <option value="sql">SQL</option><option value="bash">Bash / shell</option>
+            <option value="yaml">YAML</option><option value="markdown">Markdown</option>
+            <option value="plaintext">Plain text</option>
           </select>
         </div>
 
         <span class="tsep"></span>
 
-        <button class="btn ghost small" id="add-image-btn" title="Add image">🖼</button>
-        <button class="btn ghost small" id="add-code-btn" title="Insert code block">{ } Code</button>
-        <button class="btn ghost small" id="add-sticky-btn" title="Add a sticky note">🗒 Sticky</button>
-        <button class="btn ghost small" id="add-table-btn" title="Insert a table">▦ Table</button>
-        <button class="btn ghost small" id="add-chart-btn" title="Insert a chart">📊 Chart</button>
-        <button class="btn ghost small" id="add-math-btn" title="Insert a math expression">∑ Math</button>
+        <!-- one Insert menu for everything you can add to a page -->
+        <div class="menu">
+          <button class="btn ghost small" id="insert-btn" title="Insert an object">➕ Insert ▾</button>
+          <div class="menu-list" id="insert-menu" hidden>
+            <button data-insert="image">🖼 Image…</button>
+            <button data-insert="code">{ } Code block</button>
+            <button data-insert="sticky">🗒 Sticky note</button>
+            <button data-insert="table">▦ Table</button>
+            <button data-insert="chart">📊 Chart</button>
+            <button data-insert="math">∑ Math</button>
+            <div class="menu-head">Shapes</div>
+            <button data-insert="shape:rect">□ Rectangle</button>
+            <button data-insert="shape:ellipse">○ Circle / ellipse</button>
+            <button data-insert="shape:triangle">△ Triangle</button>
+            <button data-insert="shape:diamond">◇ Diamond</button>
+            <button data-insert="shape:line">╱ Line</button>
+            <div class="menu-head">Audio / video</div>
+            <button data-insert="media:audio-file">Import audio…</button>
+            <button data-insert="media:video-file">Import video…</button>
+            <button data-insert="media:audio-rec">Record audio</button>
+            <button data-insert="media:video-rec">Record video</button>
+          </div>
+        </div>
         <div class="menu">
           <button class="btn ghost small" id="pages-btn" title="All-pages options">📚 Pages ▾</button>
           <div class="menu-list" id="pages-menu" hidden>
@@ -181,20 +222,39 @@
             <button data-all="bg">Background colour (all pages)…</button>
             <button data-all="ruled-on">Add writing lines (all)</button>
             <button data-all="ruled-off">Remove writing lines (all)</button>
-            <button data-all="default">Make new pages match this page</button>
           </div>
         </div>
 
         <span class="tsep grow"></span>
 
-        <!-- selection actions -->
-        <div class="tool-group sel-actions" id="sel-actions" hidden>
+        <!-- object properties — only visible when something is selected -->
+        <div class="tool-group obj-opts" id="object-opts" hidden>
           <span id="sel-count" class="sel-count"></span>
+          <span class="opt-lbl">W</span><input type="number" id="geo-w" class="num" min="4" max="6000" title="Width">
+          <span class="opt-lbl">H</span><input type="number" id="geo-h" class="num" min="4" max="6000" title="Height">
+          <span class="opt-lbl">↻</span><input type="number" id="geo-rot" class="num" min="-360" max="360" step="1" title="Rotation (degrees)">
+          <span class="opt-lbl" id="geo-radius-lbl" title="Corner rounding">⌜⌝</span><input type="number" id="geo-radius" class="num" min="0" max="1000" step="1" title="Corner rounding (px)">
+          <span class="vsep"></span>
+          <!-- shape-only fill / outline controls -->
+          <span id="shape-controls" hidden>
+            <label class="swatch small" title="Fill colour"><input type="color" id="shape-fill" value="#5b7cfa"></label>
+            <button class="btn ghost small" id="shape-fill-none" title="No fill (outline only)">no fill</button>
+            <label class="swatch small" title="Outline colour"><input type="color" id="shape-stroke" value="#1a1a1a"></label>
+            <input type="number" id="shape-stroke-w" class="num" min="0" max="60" step="0.5" value="2" title="Outline width">
+          </span>
+          <label class="swatch small" id="sel-color-wrap" title="Colour of selection"><input type="color" id="sel-color" value="#1a1a1a"></label>
           <button class="btn ghost small" id="sel-edit" title="Edit table / chart" hidden>✎ Edit</button>
-          <label class="swatch small" title="Colour of selection"><input type="color" id="sel-color" value="#1a1a1a"></label>
+          <button class="btn ghost small" id="sel-crop" title="Crop image" hidden>✂ Crop</button>
           <button class="btn ghost small" id="sel-rotate" title="Rotate 90°">⟳ 90°</button>
-          <button class="btn ghost small" id="sel-front" title="Bring to front">Front</button>
-          <button class="btn ghost small" id="sel-back" title="Send to back">Back</button>
+          <div class="menu">
+            <button class="btn ghost small" id="arrange-btn" title="Arrange order (or right-click an object)">⬍ Arrange ▾</button>
+            <div class="menu-list left" id="arrange-menu" hidden>
+              <button data-arrange="front">Bring to front</button>
+              <button data-arrange="forward">Bring forward</button>
+              <button data-arrange="backward">Send backward</button>
+              <button data-arrange="back">Send to back</button>
+            </div>
+          </div>
           <button class="btn ghost small danger" id="sel-delete" title="Delete (Del)">Delete</button>
         </div>
 
@@ -216,6 +276,7 @@
         <button data-page="rotate">Rotate this page 90°</button>
         <button data-page="bg">Background colour…</button>
         <button data-page="ruled">Toggle writing lines</button>
+        <button data-page="default">Use this page's size/colour for new pages</button>
         <button data-page="delete" class="danger-item">Delete this page</button>
       </div>
 
@@ -234,10 +295,83 @@
 
   <input type="file" id="image-input" accept="image/*" hidden>
   <input type="file" id="pdf-input" accept="application/pdf,.pdf" hidden>
+  <input type="file" id="media-input" accept="audio/*,video/*" hidden>
 </div>
 
 <!-- right-click context menu (notes) -->
 <div id="ctx-menu" class="ctx-menu" hidden></div>
+
+<!-- media player -->
+<div id="media-modal" hidden>
+  <div class="media-card">
+    <div id="media-player"></div>
+    <div class="modal-actions"><button class="btn" id="media-close">Close</button></div>
+  </div>
+</div>
+
+<!-- media recorder -->
+<div id="rec-modal" hidden>
+  <div class="media-card">
+    <h3 id="rec-title">Record</h3>
+    <video id="rec-preview" muted autoplay playsinline></video>
+    <div id="rec-status">Preparing…</div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="rec-cancel">Cancel</button>
+      <button class="btn" id="rec-start" hidden>● Start</button>
+      <button class="btn danger" id="rec-stop" hidden>■ Stop &amp; insert</button>
+    </div>
+  </div>
+</div>
+
+<!-- link editor: edit display text and URL together -->
+<div id="link-modal" hidden>
+  <div class="link-card">
+    <h3 id="link-title">Add link</h3>
+    <label class="link-row">Text<input type="text" id="link-text" placeholder="Text to show" autocomplete="off"></label>
+    <label class="link-row">Link<input type="text" id="link-url" placeholder="example.com  ·  name@mail.com" autocomplete="off"></label>
+    <div class="modal-actions">
+      <button class="btn danger ghost" id="link-remove" hidden>Remove link</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="link-cancel">Cancel</button>
+      <button class="btn" id="link-ok">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- list-marker style: match text or tweak -->
+<div id="marker-modal" hidden>
+  <div class="link-card">
+    <h3>List markers</h3>
+    <p class="marker-hint">Bullets and numbers match their line's text by default. Nudge them here.</p>
+    <label class="link-row">Size<input type="range" id="marker-scale" min="0.5" max="1.5" step="0.05" value="1"><span id="marker-scale-val">100%</span></label>
+    <label class="link-row">Colour<input type="color" id="marker-color" value="#1a1a1a"><button class="btn ghost small" id="marker-color-clear" title="Match the text colour">match text</button></label>
+    <div class="modal-actions">
+      <span style="flex:1"></span>
+      <button class="btn" id="marker-close">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- image crop editor -->
+<div id="crop-modal" hidden>
+  <div class="crop-card">
+    <h3>Crop image <span class="crop-hint">drag inside to move · corners to resize</span></h3>
+    <div class="crop-stage" id="crop-stage">
+      <img id="crop-img" draggable="false">
+      <div class="crop-box" id="crop-box">
+        <span class="crop-h tl" data-h="tl"></span>
+        <span class="crop-h tr" data-h="tr"></span>
+        <span class="crop-h bl" data-h="bl"></span>
+        <span class="crop-h br" data-h="br"></span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="crop-reset">Reset</button>
+      <button class="btn ghost" id="crop-cancel">Cancel</button>
+      <button class="btn" id="crop-ok">Apply</button>
+    </div>
+  </div>
+</div>
 
 <!-- math editor: LaTeX + live render side by side -->
 <div id="math-modal" hidden>

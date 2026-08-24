@@ -19,10 +19,11 @@ class Folder(models.Model):
         on_delete=models.CASCADE,
     )
     color = models.CharField(max_length=20, default="#6c8cff")
+    order = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["order", "name"]
 
     def __str__(self):
         return self.name
@@ -33,6 +34,7 @@ class Folder(models.Model):
             "name": self.name,
             "parent_id": self.parent_id,
             "color": self.color,
+            "order": self.order,
             "children": [c.to_dict() for c in self.children.all()],
             "note_count": self.notes.count(),
         }
